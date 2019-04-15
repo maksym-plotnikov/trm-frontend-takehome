@@ -11,6 +11,7 @@ import Drawer from '@material-ui/core/Drawer';
 import CloseIcon from '@material-ui/icons/Close';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import MenuIcon from '@material-ui/icons/Menu';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
@@ -146,6 +147,7 @@ class InfoMap extends Component {
                 this.map.fitBounds(this.bounds);
             }
         };
+        // TODO Add storing to Redux (caching) for already fetched data and start from last stored
         getNext();
     }
 
@@ -174,6 +176,7 @@ class InfoMap extends Component {
                             </Typography>
                         </Toolbar>
                     </AppBar>
+                    {progress < 100 && <LinearProgress color="secondary" variant="determinate" value={progress} />}
                     <div className="wrapper">
                         {progress < 100 &&
                         <div>Loading: {progress} % <span>(processed: {markers.length} of {stores.length})</span></div>}
