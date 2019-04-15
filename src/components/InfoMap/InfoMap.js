@@ -32,6 +32,8 @@ class InfoMap extends Component {
         this.map = null;
         this.initMap = this.initMap.bind(this);
         this.createMarker = this.createMarker.bind(this);
+        this.handleMenuToggle = this.handleMenuToggle.bind(this);
+        this.handleSnackToggle = this.handleSnackToggle.bind(this);
         this.addToList = this.addToList.bind(this);
     }
 
@@ -39,11 +41,11 @@ class InfoMap extends Component {
         this.initMap();
     }
 
-    handleMenuToggle = () => {
-        this.setState(state => ({menuOpen: !state.menuOpen}));
+    handleMenuToggle(bool = false) {
+        this.setState(state => ({menuOpen: bool}));
     };
 
-    handleSnackToggle = () => {
+    handleSnackToggle() {
         this.setState(state => ({snackOpen: !state.snackOpen}));
     };
 
@@ -53,8 +55,9 @@ class InfoMap extends Component {
         this.infoWindow.close();
         this.setState({message: 'Store added to Favourites'}, () => {
             this.handleSnackToggle();
+            console.log(Object.values(list).length);
             if (Object.values(list).length === 0) {
-                this.handleMenuToggle();
+                this.handleMenuToggle(true);
             }
         });
 
@@ -70,6 +73,7 @@ class InfoMap extends Component {
     }
 
     createMarker(name, place, markerIndex) {
+        console.log(name, stores[markerIndex]);
         const marker = new this.Marker({
             position: place.geometry.location,
             map: this.map
@@ -110,7 +114,7 @@ class InfoMap extends Component {
         this.map = new this.Map(document.getElementById('map'), mapOptions);
         const service = new google.maps.places.PlacesService(this.map);
 
-        const geocodeAddress = (store, next) => {
+        const geocodeAddress = (store, next, nextAddr) => {
             const request = {
                 query: store.Address,
                 fields: ['name', 'geometry'],
@@ -119,9 +123,9 @@ class InfoMap extends Component {
                 if (status === google.maps.places.PlacesServiceStatus.OK) {
                     for (var i = 0; i < results.length; i++) {
                         this.setState(prevState => ({
-                            markers: [...prevState.markers, stores[nextAddress]]
+                            markers: [...prevState.markers, stores[nextAddr]]
                         }))
-                        this.createMarker(store.Address, results[i], nextAddress);
+                        this.createMarker(store.Address, results[i], nextAddr);
                     }
                 } else {
                     if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
@@ -135,8 +139,9 @@ class InfoMap extends Component {
 
         const getNext = () => {
             if (nextAddress < stores.length) {
+                console.log(stores[nextAddress].Name, nextAddress);
                 setTimeout(() => {
-                        geocodeAddress(stores[nextAddress], getNext);
+                        geocodeAddress(stores[nextAddress], getNext, nextAddress);
                     },
                     delay);
                 nextAddress++;
@@ -162,8 +167,8 @@ class InfoMap extends Component {
                             <IconButton
                                 color="inherit"
                                 aria-label="Open Favourites"
-                                onClick={this.handleMenuToggle}
-                                className={classNames(classes.menuButton, menuOpen && classes.hide)}
+                                onClick={() => this.handleMenuToggle(!menuOpen)}
+                                className={classes.menuButton}
                             >
                                 <MenuIcon/>
                             </IconButton>
@@ -190,7 +195,7 @@ class InfoMap extends Component {
                         }}
                     >
                         <div className={classes.drawerHeader}>
-                            <IconButton onClick={this.handleMenuToggle}>
+                            <IconButton onClick={() => this.handleMenuToggle(false)}>
                                 <ChevronLeftIcon/>
                             </IconButton>
                             <Typography variant="h5">
@@ -214,11 +219,12 @@ class InfoMap extends Component {
                                 </ListItem>
                             )}
                             {!Object.keys(list).length && (
-                                <div className="no-data-container" key="no-data"><Typography variant="subtitle2"
-                                                                                             color="inherit"
-                                                                                             align="center">
-                                    No data available
-                                </Typography></div>)}
+                                <div className="no-data-container" key="no-data">
+                                    <Typography variant="subtitle2"
+                                                color="inherit"
+                                                align="center">
+                                        No data available
+                                    </Typography></div>)}
                         </List>
                     </Drawer>
                 </Card>
