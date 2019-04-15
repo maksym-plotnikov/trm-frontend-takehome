@@ -35,6 +35,7 @@ class InfoMap extends Component {
         this.handleMenuToggle = this.handleMenuToggle.bind(this);
         this.handleSnackToggle = this.handleSnackToggle.bind(this);
         this.addToList = this.addToList.bind(this);
+        this.removeFromList = this.removeFromList.bind(this);
     }
 
     componentDidMount() {
