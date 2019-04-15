@@ -55,7 +55,6 @@ class InfoMap extends Component {
         this.infoWindow.close();
         this.setState({message: 'Store added to Favourites'}, () => {
             this.handleSnackToggle();
-            console.log(Object.values(list).length);
             if (Object.values(list).length === 0) {
                 this.handleMenuToggle(true);
             }
@@ -73,7 +72,6 @@ class InfoMap extends Component {
     }
 
     createMarker(name, place, markerIndex) {
-        console.log(name, stores[markerIndex]);
         const marker = new this.Marker({
             position: place.geometry.location,
             map: this.map
@@ -139,7 +137,6 @@ class InfoMap extends Component {
 
         const getNext = () => {
             if (nextAddress < stores.length) {
-                console.log(stores[nextAddress].Name, nextAddress);
                 setTimeout(() => {
                         geocodeAddress(stores[nextAddress], getNext, nextAddress);
                     },
