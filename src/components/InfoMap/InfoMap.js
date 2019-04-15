@@ -68,11 +68,10 @@ class InfoMap extends Component {
         deleteStore(idx);
         this.setState({message: 'Store has been deleted'}, () => {
             this.handleSnackToggle();
-
         });
     }
 
-    createMarker(name, place, markerIndex) {
+    createMarker(store, place, markerIndex) {
         const marker = new this.Marker({
             position: place.geometry.location,
             map: this.map
@@ -80,7 +79,7 @@ class InfoMap extends Component {
         this.bounds.extend(marker.position);
         // Create InfoWindow content
         const content = document.createElement('div');
-        content.innerHTML = `<div class="class"><h2>${name}</h2></div>`;
+        content.innerHTML = `<div><h2>${store.Name}</h2><h5>${store.Address}</h5></div>`;
         const button = content.appendChild(document.createElement('input'));
         button.type = 'button';
         button.id = markerIndex;
@@ -124,7 +123,7 @@ class InfoMap extends Component {
                         this.setState(prevState => ({
                             markers: [...prevState.markers, stores[nextAddr]]
                         }))
-                        this.createMarker(store.Address, results[i], nextAddr);
+                        this.createMarker(store, results[i], nextAddr);
                     }
                 } else {
                     if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
