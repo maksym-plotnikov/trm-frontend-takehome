@@ -268,7 +268,7 @@ InfoMap.propTypes = {
                 Name: string.isRequired,
                 Address: string.isRequired
             }),
-            location: oneOfType(object, string)
+            location: oneOfType([object, string])
         })
     ),
 };
