@@ -16,7 +16,7 @@
     font-size: 0.875rem;
     min-width: 64px;
     box-sizing: border-box;
-    transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,border 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+    transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
     line-height: 1.75;
     font-family: "Roboto", "Helvetica", "Arial", sans-serif;
     font-weight: 500;
@@ -40,4 +40,25 @@
     align-items: center;
     justify-content: center;
     flex-grow: 2;
+}
+
+@keyframes fadeOutUp {
+    from {
+        opacity: 1;
+        max-height: 60px;
+    }
+
+    to {
+        opacity: 0;
+        transform: translate3d(-100%, 0, 0);
+        max-height: 0;
+    }
+}
+
+.fadeOutUp {
+    animation-duration: 1s;
+    animation-fill-mode: both;
+    animation-name: fadeOutUp;
+    animation-delay: 1s;
+    max-height: 0;
 }

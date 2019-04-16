@@ -12,9 +12,9 @@ export default (
 ) => {
     switch (type) {
         case ADD_STORE:
-            const { id, store } = item;
+            const {id, store} = item;
             return {
-               ...state,
+                ...state,
                 [id]: store
             };
         case DELETE_STORE:

@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import {arrayOf, object, oneOfType, shape, string} from 'prop-types';
 import classNames from 'classnames';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -24,13 +24,14 @@ import stores from '../../../store_directory.json';
 class InfoMap extends Component {
     constructor(props) {
         super(props);
-        this.state = {markers: [], markersData: [], menuOpen: false, snackOpen: false};
+        this.state = {markers: [], menuOpen: false, snackOpen: false};
         this.Maps = google.maps;
         this.Marker = this.Maps.Marker;
         this.Map = this.Maps.Map;
         this.infoWindow = new this.Maps.InfoWindow();
         this.bounds = new this.Maps.LatLngBounds();
         this.map = null;
+        this.markersData = [];
         this.initMap = this.initMap.bind(this);
         this.createMarker = this.createMarker.bind(this);
         this.handleMenuToggle = this.handleMenuToggle.bind(this);
@@ -72,37 +73,41 @@ class InfoMap extends Component {
         });
     }
 
-    createMarker(store, place, markerIndex) {
-        const marker = new this.Marker({
-            position: place.geometry.location,
-            map: this.map
-        });
-        this.bounds.extend(marker.position);
-        // Create InfoWindow content
-        const content = document.createElement('div');
-        content.innerHTML = `<div><h2>${store.Name}</h2><h5>${store.Address}</h5></div>`;
-        const button = content.appendChild(document.createElement('input'));
-        button.type = 'button';
-        button.id = markerIndex;
-        button.classList.add('action-button');
-        button.value = 'Add to favourites';
-        button.addEventListener('click', this.addToList.bind(this));
-        this.setState(prevState => ({
-            markersData: [...prevState.markersData, marker]
-        }));
-        this.Maps.event.addListener(marker, 'click', () => {
-            this.infoWindow.setContent(content);
-            this.infoWindow.open(this.map, marker);
-        });
-        if (markerIndex % 40 === 0) {
-            this.map.fitBounds(this.bounds);
+    createMarker(store, location, markerIndex) {
+        // Omit markers with NO_RESULTS
+        if (typeof location === 'object') {
+            const marker = new this.Marker({
+                position: location,
+                map: this.map
+            });
+            this.bounds.extend(marker.position);
+            // Create InfoWindow content
+            const content = document.createElement('div');
+            content.innerHTML = `<div><h2>${store.Name}</h2><h5>${store.Address}</h5></div>`;
+            const button = content.appendChild(document.createElement('input'));
+            button.type = 'button';
+            button.id = markerIndex;
+            button.classList.add('action-button');
+            button.value = 'Add to favourites';
+            button.addEventListener('click', this.addToList.bind(this));
+            this.markersData.push(marker);
+            if(markerIndex === (stores.length -1)) {
+                new MarkerClusterer(this.map, this.markersData, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'})
+            }
+            this.Maps.event.addListener(marker, 'click', () => {
+                this.infoWindow.setContent(content);
+                this.infoWindow.open(this.map, marker);
+            });
+            if (markerIndex % 40 === 0) {
+                this.map.fitBounds(this.bounds);
+            }
+
         }
-        new MarkerClusterer(this.map, this.state.markersData, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'})
     };
 
     initMap() {
-        let nextAddress = 0;
         let delay = 100;
+        const {markers, saveMarker} = this.props;
         // TODO Check why we have to show San-Francisco in we have all data from Mexico??
         // const latlng = new google.maps.LatLng(37.773972, -122.431297); SanFrancisco
         const latlng = new this.Maps.LatLng(19.42847, -99.12766); // Mexico
@@ -113,36 +118,51 @@ class InfoMap extends Component {
         this.map = new this.Map(document.getElementById('map'), mapOptions);
         const service = new google.maps.places.PlacesService(this.map);
 
-        const geocodeAddress = (store, next, nextAddr) => {
-            const request = {
-                query: store.Address,
-                fields: ['name', 'geometry'],
-            };
-            service.findPlaceFromQuery(request, (results, status) => {
-                if (status === google.maps.places.PlacesServiceStatus.OK) {
-                    for (var i = 0; i < results.length; i++) {
-                        this.setState(prevState => ({
-                            markers: [...prevState.markers, stores[nextAddr]]
-                        }))
-                        this.createMarker(store, results[i], nextAddr);
+        // Init cahed markers from start
+        if (Object.values(markers).length) {
+            markers.map((marker, index) => this.createMarker(marker.info, marker.location, index));
+        }
+        let nextAddress = markers.length === 0 ? 0 : markers.length;
+
+
+        const findLatLang = (store, service) => {
+            return new Promise((resolve, reject) => {
+                const request = {
+                    query: store.Address,
+                    fields: ['name', 'geometry'],
+                };
+                console.log(request);
+                service.findPlaceFromQuery(request, (results, status) => {
+                    console.log(status);
+                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+                        resolve(results[0].geometry.location);
+                    } else if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+                        reject();
+                    } else {
+                        // If no results proceed to next and save to Redux
+                        resolve(status);
                     }
-                } else {
-                    if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-                        nextAddress--;
-                        delay++;
-                    }
-                }
+                });
             });
-            next();
         };
 
-        const getNext = () => {
+        const getNext = async () => {
             if (nextAddress < stores.length) {
-                setTimeout(() => {
-                        geocodeAddress(stores[nextAddress], getNext, nextAddress);
-                    },
-                    delay);
-                nextAddress++;
+                try {
+                    const location = await findLatLang(stores[nextAddress], service);
+                    console.log('location', location);
+                    if (location != null) {
+                        saveMarker({info: stores[nextAddress], location});
+                        this.createMarker(stores[nextAddress], location, nextAddress);
+                    }
+                    nextAddress++;
+                    getNext();
+
+                } catch (e) {
+                    delay++;
+                    console.log('nextAddress, delay', nextAddress, delay);
+                    setTimeout(getNext.bind(this), delay);
+                }
             } else {
                 this.map.fitBounds(this.bounds);
             }
@@ -152,8 +172,8 @@ class InfoMap extends Component {
     }
 
     render() {
-        const {markers, menuOpen, snackOpen, message} = this.state;
-        const {list, classes} = this.props;
+        const {menuOpen, snackOpen, message} = this.state;
+        const {markers, list, classes} = this.props;
         const progress = Math.ceil((markers.length / stores.length) * 100);
         return (
             <div>
@@ -176,10 +196,11 @@ class InfoMap extends Component {
                             </Typography>
                         </Toolbar>
                     </AppBar>
-                    {progress < 100 && <LinearProgress color="secondary" variant="determinate" value={progress} />}
-                    <div className="wrapper">
-                        {progress < 100 &&
-                        <div>Loading: {progress} % <span>(processed: {markers.length} of {stores.length})</span></div>}
+                    {progress < 100 && <LinearProgress color="secondary" variant="determinate" value={progress}/>}
+                    <div className={classNames('wrapper', {
+                        ['fadeOutUp']: progress === 100
+                    })}>
+                        {progress < 100 && <div>Loading: {progress} % <span>(processed: {markers.length} of {stores.length})</span></div>}
                         {progress === 100 && <div>All data has been processed</div>}
                     </div>
                     <main>
@@ -245,8 +266,17 @@ class InfoMap extends Component {
 }
 
 InfoMap.propTypes = {
-    classes: PropTypes.object.isRequired,
-    list: PropTypes.object.isRequired,
+    classes: object.isRequired,
+    list: object.isRequired,
+    markers: arrayOf(
+        shape({
+            info: shape({
+                Name: string.isRequired,
+                Address: string.isRequired
+            }),
+            location: oneOfType(object, string)
+        })
+    ),
 };
 
 
