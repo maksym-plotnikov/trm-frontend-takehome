@@ -7,7 +7,6 @@ const initialState = {
 export default (state = initialState, {type, marker}) => {
     switch (type) {
         case SAVE_MARKER:
-            console.log(marker);
             return {...state, cached: state.cached.concat(marker)};
         case DELETE_MARKER:
             return {...state, cached: [...marker]};

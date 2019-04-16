@@ -98,7 +98,7 @@ class InfoMap extends Component {
                 this.infoWindow.setContent(content);
                 this.infoWindow.open(this.map, marker);
             });
-            if (markerIndex % 40 === 0) {
+            if (markerIndex % 15 === 0) {
                 this.map.fitBounds(this.bounds);
             }
 
@@ -131,9 +131,7 @@ class InfoMap extends Component {
                     query: store.Address,
                     fields: ['name', 'geometry'],
                 };
-                console.log(request);
                 service.findPlaceFromQuery(request, (results, status) => {
-                    console.log(status);
                     if (status === google.maps.places.PlacesServiceStatus.OK) {
                         resolve(results[0].geometry.location);
                     } else if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
@@ -150,7 +148,6 @@ class InfoMap extends Component {
             if (nextAddress < stores.length) {
                 try {
                     const location = await findLatLang(stores[nextAddress], service);
-                    console.log('location', location);
                     if (location != null) {
                         saveMarker({info: stores[nextAddress], location});
                         this.createMarker(stores[nextAddress], location, nextAddress);
@@ -160,7 +157,6 @@ class InfoMap extends Component {
 
                 } catch (e) {
                     delay++;
-                    console.log('nextAddress, delay', nextAddress, delay);
                     setTimeout(getNext.bind(this), delay);
                 }
             } else {
