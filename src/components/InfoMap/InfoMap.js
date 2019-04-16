@@ -20,6 +20,7 @@ import {withStyles} from '@material-ui/core/styles';
 import {styles} from './styles'
 //Import data
 import stores from '../../../store_directory.json';
+import {BATCH_SIZE} from '../../constants/index'
 
 class InfoMap extends Component {
     constructor(props) {
@@ -91,17 +92,14 @@ class InfoMap extends Component {
             button.value = 'Add to favourites';
             button.addEventListener('click', this.addToList.bind(this));
             this.markersData.push(marker);
-            if(markerIndex % 30  === 0 || markerIndex === (stores.length -1)) {
+            if(markerIndex % BATCH_SIZE  === 0 || markerIndex === (stores.length -1)) {
+                this.map.fitBounds(this.bounds);
                 new MarkerClusterer(this.map, this.markersData, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'})
             }
             this.Maps.event.addListener(marker, 'click', () => {
                 this.infoWindow.setContent(content);
                 this.infoWindow.open(this.map, marker);
             });
-            if (markerIndex % 15 === 0) {
-                this.map.fitBounds(this.bounds);
-            }
-
         }
     };
 
