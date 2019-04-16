@@ -116,12 +116,11 @@ class InfoMap extends Component {
         this.map = new this.Map(document.getElementById('map'), mapOptions);
         const service = new google.maps.places.PlacesService(this.map);
 
-        // Init cahed markers from start
+        // Init cached markers from start
         if (Object.values(markers).length) {
             markers.map((marker, index) => this.createMarker(marker.info, marker.location, index));
         }
         let nextAddress = markers.length === 0 ? 0 : markers.length;
-
 
         const findLatLang = (store, service) => {
             return new Promise((resolve, reject) => {
@@ -161,7 +160,7 @@ class InfoMap extends Component {
                 this.map.fitBounds(this.bounds);
             }
         };
-        // TODO Add storing to Redux (caching) for already fetched data and start from last stored
+        // Start recursion call
         getNext();
     }
 

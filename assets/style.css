@@ -46,12 +46,13 @@
     from {
         opacity: 1;
         max-height: 60px;
+        padding: 8px;
     }
-
     to {
         opacity: 0;
         transform: translate3d(-100%, 0, 0);
         max-height: 0;
+        padding: 0;
     }
 }
 
@@ -61,4 +62,5 @@
     animation-name: fadeOutUp;
     animation-delay: 1s;
     max-height: 0;
+    padding: 0;
 }
