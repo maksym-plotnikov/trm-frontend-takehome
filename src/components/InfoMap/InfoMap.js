@@ -91,7 +91,7 @@ class InfoMap extends Component {
             button.value = 'Add to favourites';
             button.addEventListener('click', this.addToList.bind(this));
             this.markersData.push(marker);
-            if(markerIndex === (stores.length -1)) {
+            if(markerIndex % 30  === 0 || markerIndex === (stores.length -1)) {
                 new MarkerClusterer(this.map, this.markersData, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'})
             }
             this.Maps.event.addListener(marker, 'click', () => {
